@@ -1,0 +1,11 @@
+macd_fastLength = input(12, title="MACD Fast Length")
+macd_slowlength = input(26, title="MACD Slow Length")
+macd_length = input(9, title="MACD Period")
+macd_confirmations = input(1, title="MACD Confirmation Ticks")
+
+macd = ema(close, macd_fastLength) - ema(close, macd_slowlength)
+macd_average = ema(macd, macd_length)
+macd_delta = macd - macd_average
+
+long := long and rising(macd_delta, macd_confirmations)
+short := short and falling(macd_delta, macd_confirmations)

@@ -1,0 +1,11 @@
+last_long = na
+last_short = na
+
+last_long := long ? time : nz(last_long[1])
+last_short := short ? time : nz(last_short[1])
+
+long_signal = crossover(last_long, last_short)
+short_signal = crossunder(last_long, last_short)
+
+strategy.entry("long", strategy.long, when=long_signal)
+strategy.entry("short", strategy.short, when=short_signal)
