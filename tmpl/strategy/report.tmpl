@@ -1,0 +1,18 @@
+last_long = na
+last_short = na
+
+last_long := long ? time : nz(last_long[1])
+last_short := short ? time : nz(last_short[1])
+
+long_signal = crossover(last_long, last_short)
+short_signal = crossunder(last_long, last_short)
+
+backtest_from = timestamp(from_year, from_month, from_day, 00, 00)
+backtest_to = timestamp(to_year, to_month, to_day, 00, 00)
+backtest_period = time > backtest_from and time < backtest_to
+
+strategy.entry("long", strategy.long, when = long_signal and backtest_period)
+strategy.entry("short", strategy.short, when = short_signal and backtest_period)
+
+if time > backtest_to
+    strategy.close_all()

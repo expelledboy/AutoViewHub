@@ -1,15 +1,18 @@
 {
   "dependencies": {
     "glob": "^7.1.2",
-    "mustache": "^2.3.0"
+    "mustache": "^2.3.0",
+    "ramda": "^0.25.0"
   },
   "devDependencies": {
+    "ava": "^0.25.0",
     "eslint": "^4.19.0",
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-plugin-import": "^2.9.0"
   },
   "scripts": {
-    "build:strategy": "node core/build.js core/strategy.mustache",
-    "build:alerts": "node core/build.js core/alerts.mustache"
+    "test": "ava src/*.test.js",
+    "build:strategy": "node src/build.js strategy",
+    "build:alerts": "node src/build.js study"
   }
 }

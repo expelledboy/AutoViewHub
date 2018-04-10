@@ -1,0 +1,15 @@
+strategy("Autoview Backtest",
+  overlay=false,
+  max_bars_back=720,
+  default_qty_type=strategy.percent_of_equity,
+  default_qty_value=100)
+
+from_year = input(2018, defval = 1900, minval = 1900, maxval = 2100, title = "From Year")
+to_year = input(2100, defval = 2100, minval = 1900, maxval = 2100, title = "To Year")
+from_month = input(04, defval = 01, minval = 01, maxval = 12, title = "From Month")
+to_month = input(12, defval = 12, minval = 01, maxval = 12, title = "To Month")
+from_day = input(05, defval = 01, minval = 01, maxval = 12, title = "From Day")
+to_day = input(30, defval = 30, minval = 01, maxval = 31, title = "To Day")
+
+long = true
+short = true
