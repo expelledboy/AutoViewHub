@@ -26,7 +26,7 @@ const fetchTemplates = async (basedir = '../tmpl') => {
   }));
 };
 
-const discriminate = (templates) => {
+const filterCoreTemplates = (templates) => {
   const [core, modules] = R.partition(R.where({
     id: R.contains(R.__, ['core', 'strategy', 'study']),
   }), templates);
@@ -38,5 +38,5 @@ const discriminate = (templates) => {
 
 module.exports = {
   fetchTemplates,
-  discriminate,
+  filterCoreTemplates,
 };

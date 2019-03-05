@@ -13,6 +13,7 @@
   "scripts": {
     "test": "ava src/*.test.js",
     "build:strategy": "node src/build.js strategy",
-    "build:alerts": "node src/build.js study"
+    "build:alerts": "node src/build.js study",
+    "build": "npm run build:strategy | grep -v '^>' | pbcopy"
   }
 }

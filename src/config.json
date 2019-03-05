@@ -1,5 +1,9 @@
 {
   "strats": [
-    { "id": "macd" }
-  ]
+    { "id": "rsi" }
+  ],
+  "signal": {
+    "long": "rsi_long",
+    "short": "rsi_short"
+  }
 }

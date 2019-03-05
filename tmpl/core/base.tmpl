@@ -1,16 +1,32 @@
 //@version=3
 
-// -- {{chart}} init
 
-{{>(chart_init)}}
+//
+// -- {{script_type}} init
+//
+
+{{>(script_init)}}
+
+//
 // -- strategies
+//
 
 {{#strats}}
 // {{id}}
 
 {{>(id)}}
 {{/strats}}
-// -- {{chart}} report
 
-{{>(chart_report)}}
+//
+// -- signals
+//
 
+{{>core_signal}}
+
+{{>core_position}}
+
+//
+// -- {{script_type}} report
+//
+
+{{>(script_report)}}

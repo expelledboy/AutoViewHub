@@ -1,0 +1,16 @@
+// https://www.tradingview.com/script/SSQ9iZEx-rsi-divergence-v1-0/
+
+rsi_div_src = input(close, defval=close, title="RSI Price")
+rsi_div_fast_length = input(5, defval=7, minval=2, maxval=50, title="RSI Fast Length")
+rsi_div_slow_length = input(30, defval=30, minval=1, maxval=100, title="RSI Slow Length")
+rsi_div_smooth = input(1, defval=30, minval=1, maxval=100, title="RSI Smoothing")
+rsi_div_limit = input(30, defval=30, minval=1, maxval=100, title="RSI Limit")
+
+rsi_div_fast = rsi(rsi_div_src, rsi_div_fast_length)
+rsi_div_slow = rsi(rsi_div_src, rsi_div_slow_length)
+
+rsi_div_fast_smooth = sma(rsi_div_fast, rsi_div_smooth)
+rsi_div_slow_smooth = sma(rsi_div_slow, rsi_div_smooth)
+
+rsi_div_long = rsi_div_fast_smooth >= rsi_div_slow_smooth
+rsi_div_short = not rsi_div_long

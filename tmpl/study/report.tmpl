@@ -1,11 +1,4 @@
-last_long = na
-last_short = na
-
-last_long := long ? time : nz(last_long[1])
-last_short := short ? time : nz(last_short[1])
-
-long_signal = crossover(last_long, last_short)
-short_signal = crossunder(last_long, last_short)
-
-plotshape(long_signal, location=location.belowbar, size=size.normal, style=shape.triangleup, color=blue)
-plotshape(short_signal, location=location.abovebar, size=size.normal, style=shape.triangledown, color=yellow)
+plotshape(long_signal, location=location.belowbar, size=size.normal,
+  style=shape.triangleup, color=blue)
+plotshape(short_signal, location=location.abovebar, size=size.normal,
+  style=shape.triangledown, color=yellow)

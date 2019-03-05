@@ -9,7 +9,7 @@ test('render with dynamic template variables', (t) => {
     text: '<p>{{content}}</p>',
   };
 
-  const view = {
+  const context = {
     items: [
       { type: 'image', title: 'Some title' },
       { type: 'text', content: 'Some text' },
@@ -17,7 +17,7 @@ test('render with dynamic template variables', (t) => {
   };
 
   t.is(
-    render(template, view, partials),
+    render(template, context, partials),
     '<img title="Some title"><p>Some text</p>',
   );
 });

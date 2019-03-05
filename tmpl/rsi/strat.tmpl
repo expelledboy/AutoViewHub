@@ -1,0 +1,8 @@
+rsi_src = input(close, defval=close, title="RSI Price")
+rsi_period = input(7, defval=7, minval=2, maxval=50, title="RSI Period")
+rsi_limit = input(30, defval=30, minval=1, maxval=100, title="RSI Limit")
+
+rsi_signal = rsi(rsi_src, rsi_period)
+
+rsi_long = rsi_signal < rsi_limit
+rsi_short = rsi_signal > (100 - rsi_limit)

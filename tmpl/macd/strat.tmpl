@@ -7,5 +7,5 @@ macd = ema(close, macd_fastLength) - ema(close, macd_slowlength)
 macd_average = ema(macd, macd_length)
 macd_delta = macd - macd_average
 
-long := long and rising(macd_delta, macd_confirmations)
-short := short and falling(macd_delta, macd_confirmations)
+macd_long = rising(macd_delta, macd_confirmations)
+macd_short = falling(macd_delta, macd_confirmations)

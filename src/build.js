@@ -4,35 +4,43 @@ const R = require('ramda');
 const lint = require('./lint.js');
 const render = require('./render.js');
 const config = require('./config.json');
-const { fetchTemplates, discriminate } = require('./modules.js');
+const { fetchTemplates, filterCoreTemplates } = require('./modules.js');
 
-const chart = process.argv[2];
+const script_type = process.argv[2];
 
-if (['strategy', 'study'].indexOf(chart) < 0)
+if (['strategy', 'study'].indexOf(script_type) < 0)
   throw new Error('./build [strategy|study]');
 
 async function main() {
   const templates = await fetchTemplates('./tmpl');
-  const { core, modules } = discriminate(templates);
+  const { core, modules } = filterCoreTemplates(templates);
 
-  // modules come from contributions
   lint(modules);
-
-  const settings = R.merge(config, {
-    chart,
-    chart_init: `${chart}_init`,
-    chart_report: `${chart}_report`,
-  });
 
   // we need to create mustache compliant partials
   const partials = {};
   core.forEach(({ id, section, template }) => partials[`${id}_${section}`] = template);
   modules.forEach(({ id, template }) => partials[id] = template);
-  const { template } = core.find(R.whereEq({ id: 'core' }));
+  const { template: baseTemplate } = core.find(R.whereEq({ id: 'core' }));
 
-  // finally render the template with partials it can use
-  const content = render(template, settings, partials);
-  console.log(content);
+  // context
+  const context = R.merge(R.pick([
+    'strats',
+    'signal'
+  ], config), {
+    script_type,
+    script_init: `${script_type}_init`,
+    script_report: `${script_type}_report`,
+  });
+
+  // render the template with partials it can use
+  const content = render(baseTemplate, context, partials);
+
+  // merge multiline statements, avoid wierd errors
+  const output = content.replace(/\\\n\s+/g, "");
+  console.log(output);
 }
 
-main();
+main().catch(err => {
+  console.error('ERROR', err.message);
+});

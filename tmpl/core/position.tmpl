@@ -1,0 +1,218 @@
+trade_type = input("BOTH", \
+  title="Type of orders to place", \
+  options=["LONG", "SHORT", "BOTH", "FLIP"])
+
+must_long   = (trade_type != "SHORT")
+must_short  = (trade_type != "LONG")
+
+// -- declarations
+
+AQUA = #00FFFFFF
+BLUE = #0000FFFF
+RED  = #FF0000FF
+LIME = #00FF00FF
+GRAY = #808080FF
+DARK_RED   = #8B0000FF
+DARK_GREEN = #006400FF
+
+INACTIVE    = 0
+ACTIVELONG  = 1
+ACTIVESHORT = -1
+
+trade_state = INACTIVE
+
+trade_long_signal = false
+trade_long_close_signal = false
+trade_long_entry = na
+
+trade_short_signal = false
+trade_short_close_signal = false
+trade_short_entry = na
+
+last_high = 0.0
+last_low = 0.0
+
+last_high_short = 0.0
+last_low_long = 0.0
+
+ts_short_signal = false
+ts_long_signal = false
+
+// -- trade engine
+
+// current trade state
+
+trade_state := nz(trade_state[1])
+trade_long_close_signal := nz(trade_long_close_signal[1], false)
+trade_short_close_signal := nz(trade_short_close_signal[1], false)
+
+trade_recalculate = trade_state==INACTIVE \
+    and not (trade_long_close_signal or trade_short_close_signal) \
+    and (barstate.isconfirmed or barstate.ishistory)
+
+trade_state := trade_recalculate and must_short and short_signal ? ACTIVESHORT : trade_state
+trade_state := trade_recalculate and must_long and long_signal ? ACTIVELONG : trade_state
+
+trade_long = trade_state==ACTIVELONG
+trade_short = trade_state==ACTIVESHORT
+
+trade_long_signal := change(trade_state) and trade_long
+trade_short_signal := change(trade_state) and trade_short
+
+if trade_type=="FLIP"
+    trade_flip_signal = trade_long_signal
+    trade_long_signal := trade_short_signal
+    trade_short_signal := trade_flip_signal
+
+trade_long_entry := trade_long_signal ? close : nz(trade_long_entry[1])
+trade_short_entry := trade_short_signal ? close : nz(trade_short_entry[1])
+
+// -- track highs and lows
+
+last_high := nz(last_high[1],na)
+last_low := nz(last_low[1],na)
+last_high_short := nz(last_high_short[1],na)
+last_low_long := nz(last_low_long[1],na)
+
+if trade_long
+    last_high := (na(last_high) or high > last_high) ? high : last_high
+    last_low_long := (na(last_low_long) or low < last_low_long) ? low : last_low_long
+else
+    last_high := na
+    last_low_long := na
+
+if trade_short
+    last_low := (na(last_low) or low < last_low) ? low : last_low
+    last_high_short := (na(last_high_short) or high > last_high_short) ? high : last_high_short
+else
+    last_low := na
+    last_high_short := na
+
+// -- trailing stop
+
+// starts as soon as trade is started
+
+must_ts = input(true, "Trailing Stop")
+ts_percent = input(3.0, "Trailing Stop (%)", minval=0,step=0.1, type=float) / 100
+
+ts_long_signal := trade_long ? must_ts and (low <= last_high - (last_high * ts_percent)) : false
+ts_short_signal := trade_short ? must_ts and (high >= last_low + (last_low * ts_percent)) : false
+
+plot(must_ts and trade_long ? last_high - (last_high * ts_percent) : na, \
+    "Long Trailing", fuchsia, style=2, linewidth=2, offset=0)
+
+plot(must_ts and trade_short ? last_low + (last_low * ts_percent) : na, \
+    "Short Trailing", fuchsia, style=2, linewidth=2, offset=0)
+
+// colour candles profit=light loss=dark
+
+bclr = trade_state==INACTIVE ? black : \
+    trade_long  ? (close < trade_long_entry  ? red : green) : \
+    trade_short ? (close > trade_short_entry ? red : green) : black
+
+barcolor(bclr, title="Trade State Bar Colouring")
+
+// -- take profit
+
+must_tp = input(true, "Take Profit")
+
+tp_percent = input(3.0, "Take Profit (%)",minval=0, step=0.1, type=float) / 100
+tp_trailing_percent = input(1.0, "Trailing Profit (%)",minval=0, step=0.1, type=float) / 100
+tp_trailing_percent := tp_trailing_percent > tp_percent ? tp_percent : tp_trailing_percent
+
+tp_long_signal = must_tp and trade_long \
+    and (last_high >= trade_long_entry + trade_long_entry * tp_percent) \
+    and (low <= last_high - last_high * tp_trailing_percent)
+
+tp_short_signal = must_tp and trade_short \
+    and (last_low <= trade_short_entry - trade_short_entry * tp_percent) \
+    and (high >= last_low + last_low * tp_trailing_percent)
+
+plot(must_tp and trade_long ? trade_long_entry + trade_long_entry * tp_percent : na, \
+    "Long Take Profit", white, style=2, linewidth=2, offset=0)
+
+plot(must_tp and trade_short ? trade_short_entry - trade_short_entry * tp_percent : na, \
+    "Short Take Profit", white, style=2, linewidth=2, offset=0)
+
+// -- stop loss
+
+must_sl = input(true, "Stop Loss")
+
+sl_percent = input(3.0, "Stop Loss (%)", minval=0, step=0.1, type=float) / 100
+
+sl_long_signal = must_sl and trade_long \
+    and (low <= trade_long_entry - trade_long_entry * sl_percent)
+sl_short_signal = must_sl and trade_short \
+    and (high >= trade_short_entry + trade_short_entry * sl_percent)
+
+plot(must_sl and trade_long ? trade_long_entry - trade_long_entry * sl_percent : na, \
+    "Stop Loss", red, style=2, linewidth=2, offset=0)
+
+plot(must_sl and trade_short ? trade_short_entry + trade_short_entry * sl_percent : na, \
+    "Stop Loss", red, style=2, linewidth=2, offset=0)
+
+// -- combine close signals
+
+trade_long_close_signal := trade_long \
+    and (sl_long_signal or ts_long_signal or tp_long_signal) \
+    and not trade_long_signal
+
+trade_short_close_signal := trade_short \
+    and (sl_short_signal or ts_short_signal or tp_short_signal) \
+    and not trade_short_signal
+
+plotshape(trade_long_signal ? close : na, title="Long", \
+    color=green, textcolor=green, transp=0, \
+    style=shape.triangleup, location=location.belowbar, \
+    size=size.tiny, text="L", offset=0)
+plotshape(trade_short_signal ? close : na, title="Short", \
+    color=red, textcolor=red, transp=0, \
+    style=shape.triangledown, location=location.abovebar, \
+    size=size.tiny, text="S", offset=0)
+
+plotshape(trade_long and ts_long_signal ? close : na, title="Trailing Stop Signal", \
+    color=green, textcolor=green, transp=0, \
+    style=shape.circle, location=location.abovebar, \
+    size=size.tiny, text="TS", offset=1)
+plotshape(trade_short and ts_short_signal ? close : na, title="Trailing Stop Signal", \
+    color=red, textcolor=red, transp=0, \
+    style=shape.circle, location=location.belowbar, \
+    size=size.tiny, text="TS", offset=1)
+
+plotshape(trade_long and tp_long_signal ? close : na, title="Take Profit Signal", \
+    color=green, textcolor=green, transp=0, \
+    style=shape.circle, location=location.abovebar, \
+    size=size.tiny, text="TP", offset=2)
+plotshape(trade_short and tp_short_signal ? close : na, title="Take Profit Signal", \
+    color=red, textcolor=red, transp=0, \
+    style=shape.circle, location=location.belowbar, \
+    size=size.tiny, text="TP", offset=2)
+
+plotshape(trade_long and sl_long_signal ? close : na, title="Stop Loss Signal", \
+    color=green, textcolor=green, transp=0, \
+    style=shape.circle, location=location.abovebar, \
+    size=size.tiny, text="SL", offset=3)
+plotshape(trade_short and sl_short_signal ? close : na, title="Stop Loss Signal", \
+    color=red, textcolor=red, transp=0, \
+    style=shape.circle, location=location.belowbar, \
+    size=size.tiny, text="SL", offset=3)
+
+plotshape(trade_long_close_signal ? close : na, title="Long Close", \
+    color=green, transp=0, \
+    style=shape.xcross, location=location.abovebar, \
+    size=size.tiny, offset=4)
+plotshape(trade_short_close_signal and sl_short_signal ? close : na, title="Short Close", \
+    color=red, transp=0, \
+    style=shape.xcross, location=location.belowbar, \
+    size=size.tiny, offset=4)
+
+// -- reset vars
+
+if trade_long_close_signal or trade_short_close_signal
+    trade_state := INACTIVE
+    trade_long := false
+    trade_short := false
+    last_low := na
+    last_low_long := na
+    last_high := na
+    last_high_short := na
